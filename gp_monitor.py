@@ -1,4 +1,8 @@
+import gi
+gi.require_version('Gtk', '3.0')
+
 from matplotlib.pyplot import inferno
+from time import time
 from pypgtable import table
 from logging import DEBUG, INFO, WARN, ERROR, FATAL, NullHandler, getLogger
 from graph_tool import Graph, Vertex
@@ -44,10 +48,10 @@ ref_str = lambda x: f"{(_OVER_MAX + x) & _MASK:016x}"
 
 print("Loading Gene Pool...")
 gp = table(_DEFAULT_GP_CONFIG)
-gcs = tuple(gp.recursive_select('WHERE {population_uid}={pid}', literals={'pid': 1}, columns=_COLUMNS))
+gcs = tuple(gp.recursive_select('WHERE {population_uid}={pid}', literals={'pid': 1}))
 #for gc in gcs: print(gc)
 
-print("Creating population graph...")
+print(f"Creating population of {len(gcs)} GC's in graph...")
 g = Graph()
 vertices = g.add_vertex(len(gcs))
 pin = g.new_vertex_property("bool", val=False)
@@ -78,9 +82,12 @@ for gc in gcs:
             s[nv] = 0.0
             g.add_edge(nv, v)
 
-print("Creating graph widget...")
+print("Calculating initial layout...", end='', flush=True)
+start = time()
 count = 0
 pos = sfdp_layout(g)
+print(f'{time()-start:.2f}s')
+print("Creating graph widget...")
 
 
 class egp_GraphWidget(GraphWidget):
